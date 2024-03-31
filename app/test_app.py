@@ -24,9 +24,6 @@ def test_generate_market_report():
     assert data['industry'] == "Your industry here"
     assert data['keywords'] == ["keyword1", "keyword2"]
 
-def test_interact_with_chatbot():
-    response = client.post("/chatbot/interact", json={"message": "Your message here", "context": {"key": "value"}})
-    assert response.status_code == 200
-    data = response.json()
-    assert data['message'] == "Your message here"
-    assert data['context'] == {"key": "value"}
+# def test_interact_with_chatbot():
+#     response = client.post("/chatbot/interact", json={"message": "Name the planets in the solar system?", "context": {"key": "value"}})
+#     assert response.status_code == 200

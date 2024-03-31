@@ -11,8 +11,12 @@ from anyio.streams.memory import MemoryObjectSendStream
 import json
 from type import WaybillItem, EventItem, MarketReportRequest, ChatbotMessage
 from dotenv import load_dotenv
+from module import models
+
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
+
 
 app = FastAPI(   title="NLPForge",
     version="0.0.1",
@@ -27,6 +31,13 @@ app = FastAPI(   title="NLPForge",
     },
     openapi_url="/api/v1/openapi.json")
 # 모델 정의
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # 라우터 정의
 waybill_router = APIRouter(prefix="/waybills", tags=["Waybills"])
@@ -35,21 +46,26 @@ market_router = APIRouter(prefix="/market-reports", tags=["Market Reports"])
 chatbot_router = APIRouter(prefix="/chatbot", tags=["Chatbot"])
 
 # 라우터에 엔드포인트 추가
-@waybill_router.post("/classify", response_model=WaybillItem)
+@waybill_router.post("/classify")
 async def classify_waybill(item: WaybillItem):
     return item
 
-@event_router.post("/analyze", response_model=EventItem)
+@event_router.post("/analyze")
 async def analyze_event(item: EventItem):
     return item
 
-@market_router.post("/generate", response_model=MarketReportRequest)
+@market_router.post("/generate")
 async def generate_market_report(request: MarketReportRequest):
     return request
 
-@chatbot_router.post("/interact", response_model=ChatbotMessage)
+@chatbot_router.post("/interact")
 async def interact_with_chatbot(message: ChatbotMessage):
-    return message
+    target_model = models.ChatModelInvoker()
+    question = message.message
+    answer = target_model.generate_response(question=question)
+    return answer
+
+
 
 # 라우터 등록
 app.include_router(waybill_router)
