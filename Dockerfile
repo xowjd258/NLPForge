@@ -5,10 +5,11 @@ FROM python:3.11
 WORKDIR /app
 
 # Python 의존성 관리 파일 복사 및 설치
-COPY requirements.txt ./
-RUN pip install --upgrade pip 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
+# 환경 변수 설정
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
 ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
@@ -17,10 +18,8 @@ ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     AWS_DEFAULT_OUTPUT_FORMAT=json
 
 
-COPY . /app
-
-
+# 테스트 실행
 RUN pytest
 
-
+# 애플리케이션 실행 명령어
 CMD ["gunicorn", "-w", "3", "-b", "0.0.0.0:5050", "-k", "uvicorn.workers.UvicornWorker", "app:app"]
