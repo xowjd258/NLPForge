@@ -65,7 +65,19 @@ async def interact_with_chatbot(message: ChatbotMessage):
     answer = target_model.generate_response(question=question)
     return answer
 
+@chatbot_router.post("/interact/gpt3")
+async def interact_with_chatbot(message: ChatbotMessage):
+    target_model = models.ChatGPTAPIResponder()
+    question = message.message
+    answer = target_model.get_response(question=question)
+    return answer
 
+@chatbot_router.post("/interact/phi")
+async def interact_with_chatbot(message: ChatbotMessage):
+    target_model = models.phi_instance
+    question = message.message
+    answer = target_model.get_response(question=question)
+    return answer
 
 # 라우터 등록
 app.include_router(waybill_router)

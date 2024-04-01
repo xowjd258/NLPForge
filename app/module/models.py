@@ -7,6 +7,7 @@ import openai
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+from llama_cpp import Llama
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -46,10 +47,7 @@ class ChatGPTAPIResponder:
     def __init__(self):
         self.api_key = openai.api_key
 
-    def get_response(self, review, engine="gpt-3.5-turbo", max_tokens=250, temperature=0.5):
-        start_time = datetime.now()  
-        examples = self._get_formatted_examples()
-        prompt = self._generate_prompt(review, examples)
+    def get_response(self, prompt, engine="gpt-3.5-turbo", max_tokens=250, temperature=0.5):
         response = openai.ChatCompletion.create(
             model=engine,
             messages=[{"role": "system", "content": "Analyze the following review and provide a structured analysis."},
@@ -57,7 +55,40 @@ class ChatGPTAPIResponder:
             max_tokens=max_tokens,
             temperature=temperature
         )
-        end_time = datetime.now() 
-        analysis = response['choices'][0]['message']['content'].strip().split("\n")
-        result = tuple(line.split(": ")[1] for line in analysis if ": " in line)
-        return (*result, start_time.strftime('%Y-%m-%d %H:%M:%S'), end_time.strftime('%Y-%m-%d %H:%M:%S'))
+        result = response['choices'][0]['message']['content'].strip().split("\n")
+        return result
+
+
+class phi:
+    def __init__(self) -> None:
+        self.llm = Llama(
+        model_path="model/phi-2.Q6_K.gguf",
+        chat_format="phind")
+        pass
+
+    def get_response(self, question):
+        answer = self.llm.create_chat_completion(
+        max_tokens=32,
+        stop=["###", "\n\n"],
+        messages = [
+        {
+            "role": "system",
+            "content": "당신은 유용한 어시스턴트 입니다. 사용자의 물음에 답하세요.",
+        },
+          {
+              "role": "user",
+              "content": question
+          }
+        ])
+        # print(answer)
+        # return answer
+        for choice in answer['choices']:
+            message = choice['message']
+            if message['role'] == 'assistant':
+                return message['content']
+
+phi_instance = phi()
+if __name__== '__main__':
+    test = phi()
+    q= "Describe the delicous apple."
+    print(test.get_response(q))

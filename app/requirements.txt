@@ -11,3 +11,4 @@ starlette==0.27.0
 sse-starlette==1.6.5
 boto3==1.34.11
 botocore==1.34.11
+openai
