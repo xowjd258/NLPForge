@@ -10,6 +10,16 @@ import numpy as np
 from datetime import datetime
 from llama_cpp import Llama
 
+from langchain import hub
+from langchain.agents import load_tools,AgentExecutor, create_react_agent
+from langchain.llms.bedrock import Bedrock
+
+
+try:
+    from module.prompt_hub import local_hub_pull
+except:
+    from prompt_hub import local_hub_pull
+
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -35,6 +45,7 @@ class ChatModelInvoker(BedrockInvoker):
     def __init__(self):
         super().__init__()  
         self.model_name = 'anthropic.claude-instant-v1'
+        # self.model_name = 'anthropic.claude-v2:1'
         self.prompt_intro = "\n\nHuman:"
         self.response_intro = "\n\nAssistant:"
 
@@ -65,6 +76,32 @@ class ChatModelInvoker(BedrockInvoker):
         response_body = json.loads(response.get('body').read())
 
         return response_body.get('completion')
+    
+    def ReAct(self,prompt):
+        prompt_hub = hub.pull("hwchase17/react")
+        llm = Bedrock(
+        model_id=self.model_name, 
+        client=self.runtime_client, 
+        streaming=False)
+        tools = load_tools([ "llm-math",'wikipedia'] ,llm=llm)
+
+        agent  = create_react_agent(llm, tools, prompt_hub)
+
+        agent_executor = AgentExecutor(agent=agent, tools=tools,handle_parsing_errors=True)
+        ans = agent_executor.invoke({"input": prompt})
+        return ans
+
+    def custom_prompt_set(self,prompt,prompt_nm):
+        prompt_hub =  local_hub_pull(prompt_nm)
+        llm = Bedrock(
+        model_id=self.model_name, 
+        client=self.runtime_client, 
+        streaming=False)
+        tools = load_tools([] ,llm=llm)
+        agent  = create_react_agent(llm, tools, prompt_hub)
+        agent_executor = AgentExecutor(agent=agent, tools=tools,handle_parsing_errors=True)
+        ans = agent_executor.invoke({"input": prompt})
+        return ans
 
 class EmbeddingInvoker(BedrockInvoker):
     """
@@ -223,3 +260,7 @@ class phi:
             if message['role'] == 'assistant':
                 return message['content']
 
+if __name__ == '__main__':
+    # q = "아인슈타인이 중력 상수를 왜 거부했는 지 논리적으로 생각해보고, 나중에 어떻게 받아들였을 지 생각해봐."
+    q = "오늘 진짜 너무 행복한 날이야. 내가 오늘 왜 행복하게?"
+    test_react_ins = ChatModelInvoker()

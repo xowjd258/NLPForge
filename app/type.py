@@ -16,3 +16,8 @@ class MarketReportRequest(BaseModel):
 class ChatbotMessage(BaseModel):
     message: str
     context: dict
+
+
+class ChatbotCustomPrompt(BaseModel):
+    message: str
+    prompt_nm: str

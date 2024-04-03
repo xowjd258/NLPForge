@@ -9,7 +9,7 @@ import time
 from typing import (List,Iterator)
 from anyio.streams.memory import MemoryObjectSendStream
 import json
-from type import WaybillItem, EventItem, MarketReportRequest, ChatbotMessage
+from type import WaybillItem, EventItem, MarketReportRequest, ChatbotMessage,ChatbotCustomPrompt
 from dotenv import load_dotenv
 from module import models
 
@@ -81,7 +81,7 @@ async def generate_market_report(request: MarketReportRequest):
     """
     return request
 
-@chatbot_router.post("/interact")
+@chatbot_router.post("/interact/bedrock")
 async def interact_with_chatbot(message: ChatbotMessage):
     """
     챗봇과의 기본 상호작용을 처리하는 엔드포인트입니다. 사용자의 메시지를 받아 챗봇 모델로부터 응답을 생성하고 반환합니다.
@@ -93,6 +93,35 @@ async def interact_with_chatbot(message: ChatbotMessage):
     target_model = models.ChatModelInvoker()
     question = message.message
     answer = target_model.generate_response(question=question)
+    return answer
+
+@chatbot_router.post("/interact/bedrock/react")
+async def interact_with_chatbot(message: ChatbotMessage):
+    """
+    ReAct는 최근 제안된 기법 중 하나로, 특정 액션(동작)이나 반응을 기반으로 모델의 성능을 향상시키는 데 초점을 맞춘 기법입니다. ReAct는 주로 강화학습이나 특정 상황에서 모델의 반응을 최적화하기 위해 사용됩니다. 이 엔드포인트는 ReAct를 이용하여 상호작용을 처리하는 엔드포인트입니다. 사용자의 메시지를 받아 챗봇 모델로부터 응답을 생성하고 반환합니다.
+    Args:
+        message (ChatbotMessage): 사용자로부터의 챗봇 메시지.
+    Returns:
+        dict: 챗봇의 응답 메시지.
+    """ 
+    target_model = models.ChatModelInvoker()
+    question = message.message
+    answer = target_model.ReAct(prompt=question)
+    return answer
+
+@chatbot_router.post("/interact/bedrock/custom")
+async def interact_with_chatbot(message: ChatbotCustomPrompt):
+    """
+    챗봇과의 기본 상호작용을 처리하는 엔드포인트입니다. 사용자의 메시지를 받아 챗봇 모델로부터 응답을 생성하고 반환합니다.
+    Args:
+        message (ChatbotMessage): 사용자로부터의 챗봇 메시지.
+    Returns:
+        dict: 챗봇의 응답 메시지.
+    """ 
+    target_model = models.ChatModelInvoker()
+    question = message.message
+    prompt_nm = message.prompt_nm
+    answer = target_model.custom_prompt_set(prompt=question,prompt_nm=prompt_nm)
     return answer
 
 @chatbot_router.post("/interact/gpt3")
